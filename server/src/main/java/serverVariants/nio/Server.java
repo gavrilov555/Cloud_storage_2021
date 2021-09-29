@@ -1,4 +1,4 @@
-package nio;
+package serverVariants.nio;
 
 import lombok.extern.slf4j.Slf4j;
 

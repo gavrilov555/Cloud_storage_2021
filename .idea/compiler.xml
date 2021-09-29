@@ -9,6 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="client" />
         <module name="server" />
+        <module name="core" />
       </profile>
     </annotationProcessing>
   </component>

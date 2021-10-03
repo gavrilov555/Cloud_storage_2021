@@ -33,7 +33,8 @@ public class NettyEchoServer {
                             channel.pipeline().addLast(
                                     new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    (ChannelHandler) new FileMessageHandler()
+                                    (ChannelHandler)
+                                    new FileMessageHandler()
                             );
                         }
                     })
@@ -50,6 +51,7 @@ public class NettyEchoServer {
     }
 
     public static void main(String[] args) {
+
         new NettyEchoServer();
     }
 

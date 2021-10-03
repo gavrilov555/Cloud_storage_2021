@@ -1,11 +1,10 @@
 package corePackage;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class FileMessage implements Serializable {
+public class FileMessage extends AbstractCommand {
 
     private final String name;
     private final byte[] bytes;
@@ -21,5 +20,10 @@ public class FileMessage implements Serializable {
 
     public byte[] getBytes() {
         return bytes;
+    }
+
+    @Override
+    public CommandType getType() {
+        return CommandType.FILE_MESSAGE;
     }
 }

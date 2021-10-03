@@ -1,14 +1,14 @@
-import corePackage.Command;
-import corePackage.FileMessage;
+
+import corePackage.*;
 import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
+
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import lombok.extern.slf4j.Slf4j;
-
 
 import java.io.IOException;
 import java.net.Socket;
@@ -16,71 +16,140 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 public class Controller implements Initializable {
 
-    private static String ROOT_DIR = "client/root";
-    private static byte[] buffer = new byte[1024];
-    public ListView<String> listView;
-    public TextField input;
+    public ListView<String> clientView;
+    public ListView<String> serverView;
+    public TextField clientPath;
+    public TextField serverPath;
+    private Path currentDir;
     private ObjectDecoderInputStream is;
     private ObjectEncoderOutputStream os;
 
-    public void send(ActionEvent actionEvent) throws Exception {
-        String fileName = input.getText();
-        input.clear();
-        sendFile(fileName);
-    }
 
-    private void sendFile(String fileName) throws IOException {
-        Path file = Paths.get(ROOT_DIR, fileName);
-        os.writeObject(new FileMessage(file));
-        os.flush();
-    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            fillFilesInCurrentDir();
+            String userDir = System.getProperty("user.name");
+            currentDir = Paths.get("/Users", userDir).toAbsolutePath();
+            log.info("Current user: {}", System.getProperty("user.name"));
             Socket socket = new Socket("localhost", 8189);
             os = new ObjectEncoderOutputStream(socket.getOutputStream());
             is = new ObjectDecoderInputStream(socket.getInputStream());
-            Thread daemon = new Thread(() -> {
+
+            refreshClientView();
+            addNavigationListeners();
+
+            Thread readThread = new Thread(() -> {
                 try {
                     while (true) {
-                        Command msg = (Command) is.readObject();
-                        // TODO: 23.09.2021 Разработка системы команд
-                        switch (msg.getType()) {
-
+                        AbstractCommand command = (AbstractCommand) is.readObject();
+                        switch (command.getType()) {
+                            case LIST_MESSAGE:
+                                ListResponse response = (ListResponse) command;
+                                List<String> names = response.getNames();
+                                refreshServerView(names);
+                                break;
+                            case PATH_RESPONSE:
+                                PathUpResponse pathResponse = (PathUpResponse) command;
+                                String path = pathResponse.getPath();
+                                Platform.runLater(() -> serverPath.setText(path));
+                                break;
+                            case FILE_MESSAGE:
+                                FileMessage message = (FileMessage) command;
+                                Files.write(currentDir.resolve(message.getName()), message.getBytes());
+                                refreshClientView();
+                                break;
                         }
                     }
                 } catch (Exception e) {
-                    log.error("exception while read from input stream");
+                    e.printStackTrace();
                 }
             });
-            daemon.setDaemon(true);
-            daemon.start();
-        } catch (IOException ioException) {
-            log.error("e=", ioException);
+            readThread.setDaemon(true);
+            readThread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private void fillFilesInCurrentDir() throws IOException {
-        listView.getItems().clear();
-        listView.getItems().addAll(
-                Files.list(Paths.get(ROOT_DIR))
-                        .map(p -> p.getFileName().toString())
-                        .collect(Collectors.toList())
-        );
-        listView.setOnMouseClicked(e -> {
+    private void refreshClientView() throws IOException {
+        clientPath.setText(currentDir.toString());
+        List<String> names = Files.list(currentDir)
+                .map(p -> p.getFileName().toString())
+                .collect(Collectors.toList());
+        Platform.runLater(() -> {
+            clientView.getItems().clear();
+            clientView.getItems().addAll(names);
+        });
+    }
+
+    private void refreshServerView(List<String> names) {
+        Platform.runLater(() -> {
+            serverView.getItems().clear();
+            serverView.getItems().addAll(names);
+        });
+    }
+
+    public void upload(ActionEvent actionEvent) throws IOException {
+        String fileName = clientView.getSelectionModel().getSelectedItem();
+        FileMessage message = new FileMessage(currentDir.resolve(fileName));
+        os.writeObject(message);
+        os.flush();
+    }
+
+    public void downLoad(ActionEvent actionEvent) throws IOException {
+        String fileName = serverView.getSelectionModel().getSelectedItem();
+        os.writeObject(new FileRequest(fileName));
+        os.flush();
+    }
+
+    private void addNavigationListeners() {
+        clientView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                String item = listView.getSelectionModel().getSelectedItem();
-                input.setText(item);
+                String item = clientView.getSelectionModel().getSelectedItem();
+                Path newPath = currentDir.resolve(item);
+                if (Files.isDirectory(newPath)) {
+                    currentDir = newPath;
+                    try {
+                        refreshClientView();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        serverView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                String item = serverView.getSelectionModel().getSelectedItem();
+                try {
+                    os.writeObject(new PathInRequest(item));
+                    os.flush();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
             }
         });
     }
+
+    public void clientPathUp(ActionEvent actionEvent) throws IOException {
+        currentDir = currentDir.getParent();
+        clientPath.setText(currentDir.toString());
+        refreshClientView();
+    }
+
+    public void serverPathUp(ActionEvent actionEvent) throws IOException {
+        os.writeObject(new PathUpRequest());
+        os.flush();
+    }
+
 }
 

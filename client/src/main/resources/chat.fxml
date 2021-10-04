@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<VBox alignment="center" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/10.0.2-internal"
+      fx:controller="Controller">
+    <MenuBar>
+        <Menu text="Файл">
+            <MenuItem text="Выйти из программы" onAction="#btnExitAction"/>
+        </Menu>
+    </MenuBar>
 
-<AnchorPane prefHeight="484.0" prefWidth="330.0" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller">
-    <ListView fx:id="listView" layoutX="14.0" layoutY="14.0" prefHeight="423.0" prefWidth="145.0" />
-    <TextField fx:id="input" layoutX="181.0" layoutY="15.0" onAction="#send" prefHeight="423.0" prefWidth="134.0" />
-</AnchorPane>
+    <HBox VBox.vgrow="ALWAYS">
+        <fx:include fx:id="leftPanel" source="clientPanel.fxml" HBox.hgrow="ALWAYS" />
+        <fx:include fx:id="rightPanel" source="serverPanel.fxml" HBox.hgrow="ALWAYS" />
+    </HBox>
+
+    <HBox spacing="5">
+        <Button maxWidth="Infinity" focusTraversable="false" text="Загрузить файл" HBox.hgrow="ALWAYS" onAction="#upload"/>
+        <Button maxWidth="Infinity" focusTraversable="false" text="Скачать файл" HBox.hgrow="ALWAYS" onAction="#downLoad"/>
+        <Button maxWidth="Infinity" focusTraversable="false" text="Удалить файл" HBox.hgrow="ALWAYS"/>
+        <Button maxWidth="Infinity" focusTraversable="false" text="Выход из программы" HBox.hgrow="ALWAYS" onAction="#btnExitAction"/>
+        <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+        </padding>
+    </HBox>
+</VBox>

@@ -4,10 +4,14 @@ import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 
+
 import javafx.scene.control.ListView;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -33,9 +37,9 @@ public class Controller implements Initializable {
     private ObjectEncoderOutputStream os;
 
 
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
         try {
             String userDir = System.getProperty("user.name");
             currentDir = Paths.get("/Users", userDir).toAbsolutePath();
@@ -80,6 +84,7 @@ public class Controller implements Initializable {
         }
     }
 
+
     private void refreshClientView() throws IOException {
         clientPath.setText(currentDir.toString());
         List<String> names = Files.list(currentDir)
@@ -98,6 +103,10 @@ public class Controller implements Initializable {
         });
     }
 
+    public void btnExitAction(ActionEvent actionEvent) {
+        Platform.exit();
+    }
+
     public void upload(ActionEvent actionEvent) throws IOException {
         String fileName = clientView.getSelectionModel().getSelectedItem();
         FileMessage message = new FileMessage(currentDir.resolve(fileName));
@@ -111,6 +120,8 @@ public class Controller implements Initializable {
         os.flush();
     }
 
+
+    @FXML
     private void addNavigationListeners() {
         clientView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
@@ -150,6 +161,7 @@ public class Controller implements Initializable {
         os.writeObject(new PathUpRequest());
         os.flush();
     }
+
 
 }
 

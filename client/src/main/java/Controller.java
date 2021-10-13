@@ -4,12 +4,10 @@ import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 
 
 import javafx.scene.control.ListView;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -42,7 +38,7 @@ public class Controller implements Initializable {
 
         try {
             String userDir = System.getProperty("user.name");
-            currentDir = Paths.get("/Users", userDir).toAbsolutePath();
+            currentDir = Paths.get("client" , "root");
             log.info("Current user: {}", System.getProperty("user.name"));
             Socket socket = new Socket("localhost", 8189);
             os = new ObjectEncoderOutputStream(socket.getOutputStream());
@@ -120,8 +116,42 @@ public class Controller implements Initializable {
         os.flush();
     }
 
+    public void deleteClient (ActionEvent actionEvent) throws IOException {
+        String fileName = clientView.getSelectionModel().getSelectedItem();
+        try {
+            Files.delete(currentDir.resolve(fileName));
+        } catch (NoSuchFileException x) {
+            System.err.format("%s: no such" + " file or directory%n", currentDir);
+        } catch (DirectoryNotEmptyException x) {
+            System.err.format("%s not empty%n", currentDir);
+        } catch (IOException x) {
+            System.err.println(x);
+        }
+        os.flush();
+    }
 
-    @FXML
+   /* public void deleteServer (ActionEvent actionEvent) throws IOException {
+        String fileName = serverView.getSelectionModel().getSelectedItem();
+        try {
+            Files.delete();
+
+    }
+
+    не разобрался как удалять файлы с сервера
+
+    */
+
+
+
+
+  /*  public void rename (ActionEvent actionEvent) throws IOException {
+        String fileName = clientView.getSelectionModel().getSelectedItem();
+        Files.move(currentDir, currentDir.resolve(fileName));
+    }
+
+    не разобрался, как переменовать файл.... */
+
+
     private void addNavigationListeners() {
         clientView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {

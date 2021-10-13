@@ -4,12 +4,11 @@ package serverVariants.Netty;
 import corePackage.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import javafx.event.ActionEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 @Slf4j
 
@@ -18,7 +17,7 @@ public class FileMessageHandler extends SimpleChannelInboundHandler<AbstractComm
     private Path currentPath;
 
     public FileMessageHandler() throws IOException {
-        currentPath = Paths.get("server_dir");
+        currentPath = Paths.get("server", "root");
         if (!Files.exists(currentPath)) {
             Files.createDirectory(currentPath);
         }

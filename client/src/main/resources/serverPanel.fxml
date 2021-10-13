@@ -6,6 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import javafx.geometry.Insets?>
 <VBox alignment="center" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/10.0.2-internal"
       fx:controller="Controller">
     <HBox>
@@ -13,6 +14,16 @@
         <Button text="Вверх" onAction="#serverPathUp"/>
     </HBox>
     <ListView fx:id="serverView" VBox.vgrow="ALWAYS"/>
+
+    <HBox spacing="5">
+        <Button maxWidth="Infinity" focusTraversable="false" text="Скачать" HBox.hgrow="ALWAYS" onAction="#downLoad"/>
+        <Button maxWidth="Infinity" focusTraversable="false" text="Переменовать" HBox.hgrow="ALWAYS"/>
+        <Button maxWidth="Infinity" focusTraversable="false" text="Удалить" HBox.hgrow="ALWAYS"/>
+        <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+        </padding>
+    </HBox>
+
 
 
     <properties>

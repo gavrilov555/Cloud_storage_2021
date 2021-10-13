@@ -11,18 +11,16 @@
         </Menu>
     </MenuBar>
 
-    <HBox VBox.vgrow="ALWAYS">
+       <HBox VBox.vgrow="ALWAYS">
         <fx:include fx:id="leftPanel" source="clientPanel.fxml" HBox.hgrow="ALWAYS" />
         <fx:include fx:id="rightPanel" source="serverPanel.fxml" HBox.hgrow="ALWAYS" />
     </HBox>
 
     <HBox spacing="5">
-        <Button maxWidth="Infinity" focusTraversable="false" text="Загрузить файл" HBox.hgrow="ALWAYS" onAction="#upload"/>
-        <Button maxWidth="Infinity" focusTraversable="false" text="Скачать файл" HBox.hgrow="ALWAYS" onAction="#downLoad"/>
-        <Button maxWidth="Infinity" focusTraversable="false" text="Удалить файл" HBox.hgrow="ALWAYS"/>
         <Button maxWidth="Infinity" focusTraversable="false" text="Выход из программы" HBox.hgrow="ALWAYS" onAction="#btnExitAction"/>
         <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
         </padding>
     </HBox>
 </VBox>
+

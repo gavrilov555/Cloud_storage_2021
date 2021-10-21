@@ -1,6 +1,6 @@
 package corePackage;
 
-public class ListRequest  extends AbstractCommand{
+public class ListRequest  extends Command{
 
     @Override
     public CommandType getType() {

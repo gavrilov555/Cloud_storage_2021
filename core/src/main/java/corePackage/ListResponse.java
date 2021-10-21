@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ListResponse extends AbstractCommand{
+public class ListResponse extends Command{
 
     private final List<String> names;
 
@@ -23,7 +23,7 @@ public class ListResponse extends AbstractCommand{
 
     @Override
     public CommandType getType() {
-        return CommandType.LIST_MESSAGE;
+        return CommandType.LIST_RESPONSE;
     }
 }
 

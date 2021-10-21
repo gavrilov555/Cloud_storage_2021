@@ -1,14 +1,14 @@
 package corePackage;
 
-public class PathUpResponse extends AbstractCommand{
+public class PathResponse extends Command {
 
     private final String path;
 
-    public PathUpResponse(String path) {
+    public PathResponse(String path) {
         this.path = path;
     }
 
-    public String getPath () {
+    public String getPath() {
         return path;
     }
 
@@ -16,4 +16,5 @@ public class PathUpResponse extends AbstractCommand{
     public CommandType getType() {
         return CommandType.PATH_RESPONSE;
     }
+
 }

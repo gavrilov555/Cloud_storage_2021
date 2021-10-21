@@ -5,13 +5,11 @@ import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
-
-
+import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-
+import javafx.scene.layout.AnchorPane;
 import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
@@ -26,11 +24,51 @@ public class Controller implements Initializable {
 
     public ListView<String> clientView;
     public ListView<String> serverView;
+    public TextField input;
     public TextField clientPath;
     public TextField serverPath;
-    private Path currentDir;
+    private Path currentDir = Paths.get("D:\\cloud_storage_2021\\server", "root");
     private ObjectDecoderInputStream is;
     private ObjectEncoderOutputStream os;
+    public AnchorPane mainScene;
+
+    public TextField loginField;
+    public TextField passwordField;
+    public Button Authorization;
+
+    private Net net;
+
+    public void sendLoginAndPassword (ActionEvent actionEvent) {
+
+        String login = loginField.getText();
+        String password = passwordField.getText();
+        loginField.clear();
+        passwordField.clear();
+        net.sendCommand(new AuthRequest(login,password));
+    }
+
+    public void sendFile (ActionEvent actionEvent) throws IOException {
+
+        String fileName = input.getText();
+        input.clear();
+        Path file = Paths.get(String.valueOf(currentDir.resolve(fileName)));
+        net.sendCommand(new FileMessage(file));
+    }
+
+    public void receiveArrayFiles(ActionEvent actionEvent) {
+        net.sendCommand(new ListRequest());
+    }
+
+    public void updateArrayFiles(ActionEvent actionEvent) throws IOException {
+        refreshClientView();
+    }
+
+    public void receiveFile(ActionEvent actionEvent) {
+        String fileName = input.getText();
+        input.clear();
+        Path file = Paths.get(fileName);
+        net.sendCommand(new FileRequest(file));
+    }
 
 
     @Override
@@ -38,48 +76,52 @@ public class Controller implements Initializable {
 
         try {
             String userDir = System.getProperty("user.name");
-            currentDir = Paths.get("client" , "root");
+            currentDir = Paths.get("client", "root");
             log.info("Current user: {}", System.getProperty("user.name"));
-            Socket socket = new Socket("localhost", 8189);
-            os = new ObjectEncoderOutputStream(socket.getOutputStream());
-            is = new ObjectDecoderInputStream(socket.getInputStream());
-
             refreshClientView();
             addNavigationListeners();
-
-            Thread readThread = new Thread(() -> {
-                try {
-                    while (true) {
-                        AbstractCommand command = (AbstractCommand) is.readObject();
-                        switch (command.getType()) {
-                            case LIST_MESSAGE:
-                                ListResponse response = (ListResponse) command;
-                                List<String> names = response.getNames();
-                                refreshServerView(names);
-                                break;
-                            case PATH_RESPONSE:
-                                PathUpResponse pathResponse = (PathUpResponse) command;
-                                String path = pathResponse.getPath();
-                                Platform.runLater(() -> serverPath.setText(path));
-                                break;
-                            case FILE_MESSAGE:
-                                FileMessage message = (FileMessage) command;
-                                Files.write(currentDir.resolve(message.getName()), message.getBytes());
-                                refreshClientView();
-                                break;
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-            readThread.setDaemon(true);
-            readThread.start();
-        } catch (Exception e) {
+        }catch (IOException e) {
             e.printStackTrace();
         }
-    }
 
+        net = Net.getInstance(cmd -> {
+            switch (cmd.getType()) {
+                case LIST_RESPONSE:
+                    ListResponse listResponse = (ListResponse) cmd;
+                    refreshServerView(listResponse.getNames());
+                    break;
+                case FILE_MESSAGE:
+                    FileMessage fileMessage = (FileMessage) cmd;
+                    Files.write(
+                            currentDir.resolve(fileMessage.getName()),
+                            fileMessage.getBytes()
+                    );
+                    refreshClientView();
+                    break;
+                case PATH_RESPONSE:
+                    PathResponse pathResponse = (PathResponse) cmd;
+                    serverPath.setText(pathResponse.getPath());
+                    break;
+                case AUTH_RESPONSE:
+                    AuthResponse authResponse = (AuthResponse) cmd;
+                    log.debug("AuthResponse {}", authResponse.getAuthStatus());
+                    if (authResponse.getAuthStatus()) {
+                        mainScene.setVisible(true);
+                        loginField.setVisible(false);
+                        passwordField.setVisible(false);
+                        Authorization.setVisible(false);
+                        net.sendCommand(new ListRequest());
+                    } else {
+
+                    }
+
+                    break;
+                default:
+                    log.debug("Invalid command {}", cmd.getType());
+            }
+                }
+        );
+    }
 
     private void refreshClientView() throws IOException {
         clientPath.setText(currentDir.toString());
@@ -112,7 +154,7 @@ public class Controller implements Initializable {
 
     public void downLoad(ActionEvent actionEvent) throws IOException {
         String fileName = serverView.getSelectionModel().getSelectedItem();
-        os.writeObject(new FileRequest(fileName));
+        os.writeObject(new FileRequest(Paths.get(fileName)));
         os.flush();
     }
 

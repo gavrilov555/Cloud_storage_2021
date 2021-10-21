@@ -1,6 +1,6 @@
 package corePackage;
 
-public class AuthResponse  extends AbstractCommand{
+public class AuthResponse  extends Command{
 
     private boolean authStatus;
 

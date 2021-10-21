@@ -24,7 +24,6 @@ public class NettyEchoServer {
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
-
             ChannelFuture channelFuture = bootstrap.group(auth, worker)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -33,7 +32,6 @@ public class NettyEchoServer {
                             channel.pipeline().addLast(
                                     new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    (ChannelHandler)
                                     new FileMessageHandler()
                             );
                         }

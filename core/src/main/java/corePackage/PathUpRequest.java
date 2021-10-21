@@ -1,9 +1,9 @@
 package corePackage;
 
-public class PathUpRequest extends AbstractCommand {
+public class PathUpRequest extends Command {
 
     @Override
     public CommandType getType() {
-        return CommandType.PATH_UP;
+        return CommandType.PATH_UP_REQUEST;
     }
 }

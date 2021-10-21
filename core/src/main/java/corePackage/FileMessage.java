@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class FileMessage extends AbstractCommand {
+public class FileMessage extends Command {
 
     private final String name;
     private final byte[] bytes;

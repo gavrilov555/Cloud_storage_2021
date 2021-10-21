@@ -1,6 +1,6 @@
 package corePackage;
 
-public class AuthRequest  extends  AbstractCommand{
+public class AuthRequest  extends  Command{
 
     public AuthRequest(String login, String password) {
         this.login = login;

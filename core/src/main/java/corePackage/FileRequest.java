@@ -1,11 +1,13 @@
 package corePackage;
 
-public class FileRequest  extends AbstractCommand{
+import java.nio.file.Path;
+
+public class FileRequest  extends Command{
 
     private final String name;
 
-    public FileRequest(String name) {
-        this.name = name;
+    public FileRequest(Path path) {
+        name = path.getFileName().toString();
     }
 
     public String getName() {

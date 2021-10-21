@@ -1,6 +1,6 @@
 package corePackage;
 
-public class PathInRequest extends AbstractCommand{
+public class PathInRequest extends Command{
 
     private final String root;
 

@@ -1,17 +1,12 @@
 
 import corePackage.*;
-import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
-import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
-import java.net.Socket;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.List;
@@ -27,9 +22,7 @@ public class Controller implements Initializable {
     public TextField input;
     public TextField clientPath;
     public TextField serverPath;
-    private Path currentDir = Paths.get("D:\\cloud_storage_2021\\server", "root");
-    private ObjectDecoderInputStream is;
-    private ObjectEncoderOutputStream os;
+    private static Path currentDir = Paths.get("D:\\cloud_storage_2021\\server", "root");
     public AnchorPane mainScene;
 
     public TextField loginField;
@@ -51,7 +44,7 @@ public class Controller implements Initializable {
 
         String fileName = input.getText();
         input.clear();
-        Path file = Paths.get(String.valueOf(currentDir.resolve(fileName)));
+        Path file = currentDir.resolve(fileName);
         net.sendCommand(new FileMessage(file));
     }
 
@@ -70,17 +63,25 @@ public class Controller implements Initializable {
         net.sendCommand(new FileRequest(file));
     }
 
+    public void clientPathUp(ActionEvent actionEvent) throws IOException {
+        currentDir = currentDir.getParent();
+        clientPath.setText(currentDir.toString());
+        refreshClientView();
+    }
+
+    public void serverPathUp(ActionEvent actionEvent) {
+        net.sendCommand(new PathUpRequest());
+    }
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
         try {
-            String userDir = System.getProperty("user.name");
-            currentDir = Paths.get("client", "root");
-            log.info("Current user: {}", System.getProperty("user.name"));
+            clientPath.setText(currentDir.toString());
             refreshClientView();
-            addNavigationListeners();
-        }catch (IOException e) {
+            addNavigationListener();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -111,10 +112,13 @@ public class Controller implements Initializable {
                         passwordField.setVisible(false);
                         Authorization.setVisible(false);
                         net.sendCommand(new ListRequest());
-                    } else {
-
+                    } else if (!authResponse.getAuthStatus()){
+                        Platform.runLater(()-> {
+                            Alert alert = new Alert(Alert.AlertType.WARNING, " Неверный логин или пароль",
+                                    ButtonType.OK);
+                            alert.showAndWait();
+                        });
                     }
-
                     break;
                 default:
                     log.debug("Invalid command {}", cmd.getType());
@@ -123,117 +127,83 @@ public class Controller implements Initializable {
         );
     }
 
-    private void refreshClientView() throws IOException {
-        clientPath.setText(currentDir.toString());
-        List<String> names = Files.list(currentDir)
-                .map(p -> p.getFileName().toString())
-                .collect(Collectors.toList());
-        Platform.runLater(() -> {
-            clientView.getItems().clear();
-            clientView.getItems().addAll(names);
-        });
+    private String resolveFileType(Path path) {
+        if (Files.isDirectory(path)) {
+            return "[Dir]" + " " + path.getFileName().toString();
+        } else {
+            return "[File]" + " " + path.getFileName().toString();
+        }
+    }
+
+    public String returnName2(String str) {
+        String[] words = str.split(" ");
+        String returnWay;
+        switch (words.length) {
+            case 2:
+                returnWay = words[1];
+                break;
+            case 3:
+                returnWay = words[1] + " " + words[2];
+                break;
+            case 4:
+                returnWay = words[1] + " " + words[2] + " " + words[3];
+                break;
+            default:
+                returnWay = words[1];
+                break;
+
+        }
+        return returnWay;
+    }
+
+    public String returnName1(String str) {
+        String[] words = str.split(" ");
+        return words[0];
     }
 
     private void refreshServerView(List<String> names) {
-        Platform.runLater(() -> {
-            serverView.getItems().clear();
-            serverView.getItems().addAll(names);
-        });
+        serverView.getItems().clear();
+        serverView.getItems().addAll(names);
     }
 
-    public void btnExitAction(ActionEvent actionEvent) {
-        Platform.exit();
+
+    private void refreshClientView() throws IOException {
+        clientView.getItems().clear();
+        List<String> names = Files.list(currentDir)
+                .map(this::resolveFileType)
+                .collect(Collectors.toList());
+        clientView.getItems().addAll(names);
     }
 
-    public void upload(ActionEvent actionEvent) throws IOException {
-        String fileName = clientView.getSelectionModel().getSelectedItem();
-        FileMessage message = new FileMessage(currentDir.resolve(fileName));
-        os.writeObject(message);
-        os.flush();
-    }
-
-    public void downLoad(ActionEvent actionEvent) throws IOException {
-        String fileName = serverView.getSelectionModel().getSelectedItem();
-        os.writeObject(new FileRequest(Paths.get(fileName)));
-        os.flush();
-    }
-
-    public void deleteClient (ActionEvent actionEvent) throws IOException {
-        String fileName = clientView.getSelectionModel().getSelectedItem();
-        try {
-            Files.delete(currentDir.resolve(fileName));
-        } catch (NoSuchFileException x) {
-            System.err.format("%s: no such" + " file or directory%n", currentDir);
-        } catch (DirectoryNotEmptyException x) {
-            System.err.format("%s not empty%n", currentDir);
-        } catch (IOException x) {
-            System.err.println(x);
-        }
-        os.flush();
-    }
-
-   /* public void deleteServer (ActionEvent actionEvent) throws IOException {
-        String fileName = serverView.getSelectionModel().getSelectedItem();
-        try {
-            Files.delete();
-
-    }
-
-    не разобрался как удалять файлы с сервера
-
-    */
-
-
-
-
-  /*  public void rename (ActionEvent actionEvent) throws IOException {
-        String fileName = clientView.getSelectionModel().getSelectedItem();
-        Files.move(currentDir, currentDir.resolve(fileName));
-    }
-
-    не разобрался, как переменовать файл.... */
-
-
-    private void addNavigationListeners() {
+    public void addNavigationListener() {
         clientView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                String item = clientView.getSelectionModel().getSelectedItem();
+                String item = returnName2(clientView.getSelectionModel().getSelectedItem());
                 Path newPath = currentDir.resolve(item);
                 if (Files.isDirectory(newPath)) {
                     currentDir = newPath;
+
                     try {
                         refreshClientView();
+                        clientPath.setText(currentDir.toString());
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
+                } else {
+                    input.setText(item);
                 }
             }
         });
-
         serverView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                String item = serverView.getSelectionModel().getSelectedItem();
-                try {
-                    os.writeObject(new PathInRequest(item));
-                    os.flush();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
+                String item = returnName2(serverView.getSelectionModel().getSelectedItem());
+                if (returnName1(serverView.getSelectionModel().getSelectedItem()).equals("[Dir]")) {
+                    net.sendCommand(new PathInRequest(item));
+                } else {
+                    input.setText(item);
                 }
             }
         });
     }
-
-    public void clientPathUp(ActionEvent actionEvent) throws IOException {
-        currentDir = currentDir.getParent();
-        clientPath.setText(currentDir.toString());
-        refreshClientView();
-    }
-
-    public void serverPathUp(ActionEvent actionEvent) throws IOException {
-        os.writeObject(new PathUpRequest());
-        os.flush();
-    }
-
-
 }
 

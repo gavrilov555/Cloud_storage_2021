@@ -4,13 +4,10 @@ package serverVariants.Netty;
 import corePackage.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-
 import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.nio.file.*;
 
-;
 
 @Slf4j
 
@@ -18,14 +15,7 @@ public class FileMessageHandler extends SimpleChannelInboundHandler<Command> {
 
     private Path currentPath;
     private Path clientPath;
-   // AuthService service = new AuthService();
-
-    public FileMessageHandler() throws IOException {
-        currentPath = Paths.get("server", "root");
-        if (!Files.exists(currentPath)) {
-            Files.createDirectory(currentPath);
-        }
-    }
+    DBAuthService service = DBAuthService.getInstance();
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
